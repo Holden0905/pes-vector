@@ -47,7 +47,7 @@ export default function FieldEventDetailPage() {
         return;
       }
 
-      setEvent(data as FieldEventDetail);
+      setEvent(data as unknown as FieldEventDetail);
     }
 
     load();

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Card } from "@/components/ui/card";
@@ -25,11 +26,12 @@ const STATUSES = [
 
 export function WorkRequestBoard() {
   const [items, setItems] = useState<WorkRequest[]>([]);
-  const [error, setError] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
-      const { data, error } = await supabase
+      setError(null);
+      const { data, error: err } = await supabase
         .from("work_requests")
         .select(`
           id,
@@ -40,12 +42,12 @@ export function WorkRequestBoard() {
           primary_owner:profiles!work_requests_primary_owner_id_fkey(full_name),
           field_events ( clients ( name ) ),
           wr_assignees!wr_assignees_work_request_id_fkey ( user_id )
-        `);
-        
+        `)
+        .neq("status", "complete");
 
-      if (error) {
-        console.error("work_requests query error:", error);
-        setError(true);
+      if (err) {
+        console.error("work_requests query error:", err);
+        setError(err.message);
         return;
       }
 
@@ -64,9 +66,15 @@ export function WorkRequestBoard() {
     item.wr_assignees != null && item.wr_assignees.length > 0;
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+    <div className="space-y-4">
+      {error && (
+        <p className="text-sm text-destructive">
+          Error loading work requests: {error}
+        </p>
+      )}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {STATUSES.map((status) => {
-        const filtered = error ? [] : items.filter((item) => item.status === status);
+        const filtered = error != null ? [] : items.filter((item) => item.status === status);
 
         return (
           <div key={status} className="space-y-3">
@@ -76,25 +84,27 @@ export function WorkRequestBoard() {
 
             <div className="space-y-2">
               {filtered.map((item) => (
-                <Card key={item.id} className="p-3">
-                  <div className="text-xs text-muted-foreground">
-                    {getClientName(item)}
-                  </div>
-                  <div className="text-sm font-bold">
-                    {item.wr_number ?? "—"}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Primary: {item.primary_owner?.full_name ?? "Unassigned"}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Assigned: {hasAssignees(item) ? "✅" : "☐"}
-                  </div>
-                  {formatDate(item.due_date) && (
+                <Link key={item.id} href={`/work-requests/${item.id}`} className="block">
+                  <Card className="p-3">
                     <div className="text-xs text-muted-foreground">
-                      Due: {formatDate(item.due_date)}
+                      {getClientName(item)}
                     </div>
-                  )}
-                </Card>
+                    <div className="text-sm font-bold">
+                      {item.wr_number ?? "—"}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Primary: {item.primary_owner?.full_name ?? "Unassigned"}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Assigned: {hasAssignees(item) ? "✅" : "☐"}
+                    </div>
+                    {formatDate(item.due_date) && (
+                      <div className="text-xs text-muted-foreground">
+                        Due: {formatDate(item.due_date)}
+                      </div>
+                    )}
+                  </Card>
+                </Link>
               ))}
 
               {filtered.length === 0 && (
@@ -104,6 +114,7 @@ export function WorkRequestBoard() {
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
