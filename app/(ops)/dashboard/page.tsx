@@ -11,6 +11,7 @@ type FieldEvent = {
   name: string;
   status: string;
   clients: { name: string } | null;
+  programs: { name: string } | null;
   lead: { full_name: string } | null;
 };
 
@@ -27,7 +28,7 @@ export default function DashboardPage() {
       const { data, error } = await supabase
         .from("field_events")
         .select(
-          "id, name, status, clients(name), lead:profiles!field_events_lead_id_fkey(full_name)"
+          "id, name, status, clients(name), programs(name), lead:profiles!field_events_lead_id_fkey(full_name)"
         );
 
       if (error) {
@@ -76,8 +77,11 @@ export default function DashboardPage() {
                 {filtered.map((event) => (
                   <Link key={event.id} href={`/field-events/${event.id}`} className="block">
                     <Card className="p-3">
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-sm font-medium text-muted-foreground">
                         {event.clients?.name ?? "No client"}
+                      </div>
+                      <div className="text-sm font-medium text-muted-foreground">
+                        {event.programs?.name ?? "—"}
                       </div>
                       <div className="text-sm font-medium">{event.name}</div>
                       <div className="text-xs text-muted-foreground">

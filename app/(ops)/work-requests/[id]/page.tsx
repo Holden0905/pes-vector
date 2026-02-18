@@ -428,6 +428,7 @@ type WorkRequestDetail = {
     id: string;
     name: string | null;
     clients: { name: string } | null;
+    programs: { name: string } | null;
   } | null;
   wr_assignees: { user_id: string }[] | null;
 };
@@ -532,7 +533,7 @@ export default function WorkRequestDetailPage() {
       const { data, error: err } = await supabase
         .from("work_requests")
         .select(
-          "id, field_event_id, wr_number, status, priority, due_date, notes, primary_owner:profiles!work_requests_primary_owner_id_fkey(full_name), field_events(id, name, clients(name)), wr_assignees(user_id)"
+          "id, field_event_id, wr_number, status, priority, due_date, notes, primary_owner:profiles!work_requests_primary_owner_id_fkey(full_name), field_events(id, name, clients(name), programs(name)), wr_assignees(user_id)"
         )
         .eq("id", id)
         .single();
@@ -617,6 +618,7 @@ export default function WorkRequestDetailPage() {
   const formatDate = (d: string | null) =>
     d ? new Date(d).toLocaleDateString() : "—";
   const clientName = item.field_events?.clients?.name ?? "—";
+  const programName = item.field_events?.programs?.name ?? "—";
   const fieldEventName = item.field_events?.name ?? "—";
   const hasAssignees =
     item.wr_assignees != null && item.wr_assignees.length > 0;
@@ -648,6 +650,10 @@ export default function WorkRequestDetailPage() {
         <div>
           <span className="text-sm text-muted-foreground">Client: </span>
           <span>{clientName}</span>
+        </div>
+        <div>
+          <span className="text-sm text-muted-foreground">Program: </span>
+          <span>{programName}</span>
         </div>
         <div>
           <span className="text-sm text-muted-foreground">Field Event: </span>

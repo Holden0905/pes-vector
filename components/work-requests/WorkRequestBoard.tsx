@@ -12,7 +12,10 @@ type WorkRequest = {
   priority: string | null;
   due_date: string | null;
   primary_owner: { full_name: string } | null;
-  field_events: { clients: { name: string } | null } | null;
+  field_events: {
+    clients: { name: string } | null;
+    programs: { name: string } | null;
+  } | null;
   wr_assignees: { user_id: string }[] | null;
 };
 
@@ -40,7 +43,7 @@ export function WorkRequestBoard() {
           priority,
           due_date,
           primary_owner:profiles!work_requests_primary_owner_id_fkey(full_name),
-          field_events ( clients ( name ) ),
+          field_events ( clients ( name ), programs ( name ) ),
           wr_assignees!wr_assignees_work_request_id_fkey ( user_id )
         `)
         .neq("status", "complete");
@@ -61,6 +64,9 @@ export function WorkRequestBoard() {
 
   const getClientName = (item: WorkRequest) =>
     item.field_events?.clients?.name ?? "No client";
+
+  const getProgramName = (item: WorkRequest) =>
+    item.field_events?.programs?.name ?? "—";
 
   const hasAssignees = (item: WorkRequest) =>
     item.wr_assignees != null && item.wr_assignees.length > 0;
@@ -88,6 +94,9 @@ export function WorkRequestBoard() {
                   <Card className="p-3">
                     <div className="text-xs text-muted-foreground">
                       {getClientName(item)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {getProgramName(item)}
                     </div>
                     <div className="text-sm font-bold">
                       {item.wr_number ?? "—"}
