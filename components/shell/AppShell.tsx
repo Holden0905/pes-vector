@@ -60,6 +60,13 @@ export function AppShell({ children }: Props) {
             >
               {collapsed ? "WR" : "Work Requests"}
             </a>
+            <a
+              href="/clients"
+              className="block rounded-md px-3 py-2 hover:bg-accent hover:text-accent-foreground"
+              title="Clients"
+            >
+              {collapsed ? "C" : "Clients"}
+            </a>
           </nav>
         </aside>
 

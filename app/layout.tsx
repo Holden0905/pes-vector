@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 
@@ -27,6 +28,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={"dark"}>
         <AuthProvider>{children}</AuthProvider>
+        <Toaster richColors />
       </body>
     </html>
   );
