@@ -67,11 +67,11 @@ export default function ClientsPage() {
 
       const regMap: Record<string, string[]> = {};
       for (const r of regsRes.data ?? []) {
-        const row = r as { client_id: string; regulations: { code: string } | null };
-        const code = row.regulations?.code;
-        if (code && row.client_id) {
+        const row = r as { client_id: string; regulations: { code: any }[] | null };
+        const codes = (row.regulations ?? []).map((x) => x.code);
+        if (row.client_id && codes.length > 0) {
           if (!regMap[row.client_id]) regMap[row.client_id] = [];
-          regMap[row.client_id].push(code);
+          regMap[row.client_id].push(...codes);
         }
       }
       setRegsByClientId(regMap);
@@ -80,12 +80,12 @@ export default function ClientsPage() {
       for (const f of freqsRes.data ?? []) {
         const row = f as {
           client_id: string;
-          monitoring_frequencies: { code: string } | null;
+          monitoring_frequencies: { code: any }[] | null;
         };
-        const code = row.monitoring_frequencies?.code;
-        if (code && row.client_id) {
+        const codes = (row.monitoring_frequencies ?? []).map((x) => x.code);
+        if (row.client_id && codes.length > 0) {
           if (!freqMap[row.client_id]) freqMap[row.client_id] = [];
-          freqMap[row.client_id].push(code);
+          freqMap[row.client_id].push(...codes);
         }
       }
       setFreqsByClientId(freqMap);

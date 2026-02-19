@@ -12,17 +12,23 @@ import {
   type ClientDetail,
 } from "@/components/clients/ClientFormModal";
 
+type Regulation = {
+  id: string;
+  code: string;
+};
+
+type MonitoringFrequency = {
+  id: string;
+  code: string;
+};
+
 export default function ClientDetailPage() {
   const params = useParams();
   const id = params.id as string;
   const [client, setClient] = useState<ClientDetail | null>(null);
-  const [clientRegulations, setClientRegulations] = useState<
-    { regulations: { id: string; code: string } | null }[]
-  >([]);
+  const [clientRegulations, setClientRegulations] = useState<Regulation[]>([]);
   const [clientMonitoringFrequencies, setClientMonitoringFrequencies] =
-    useState<{ monitoring_frequencies: { id: string; code: string } | null }[]>(
-      []
-    );
+    useState<MonitoringFrequency[]>([]);
   const [clientDatabaseType, setClientDatabaseType] = useState<{
     database_types: { id: string; code: string } | null;
   } | null>(null);
@@ -68,7 +74,9 @@ export default function ClientDetailPage() {
           )
         `)
         .eq("client_id", id);
-      setClientRegulations((regData ?? []) as { regulations: { id: string; code: string } | null }[]);
+      const regulations: Regulation[] =
+        (regData ?? []).flatMap((row: any) => row.regulations ?? []);
+      setClientRegulations(regulations);
 
       const { data: mfData } = await supabase
         .from("client_monitoring_frequencies")
@@ -78,11 +86,9 @@ export default function ClientDetailPage() {
           foreignTable: "monitoring_frequencies",
           ascending: true,
         });
-      setClientMonitoringFrequencies(
-        (mfData ?? []) as {
-          monitoring_frequencies: { id: string; code: string } | null;
-        }[]
-      );
+      const monitoringFrequencies: MonitoringFrequency[] =
+        (mfData ?? []).flatMap((row: any) => row.monitoring_frequencies ?? []);
+      setClientMonitoringFrequencies(monitoringFrequencies);
 
       const { data: dbTypeData } = await supabase
         .from("client_database_types")
@@ -202,13 +208,13 @@ export default function ClientDetailPage() {
           <h2 className="text-sm font-medium text-muted-foreground mb-2">
             Regulations
           </h2>
-          {clientRegulations.filter((r) => r.regulations?.code).length > 0 ? (
+          {clientRegulations.filter((r) => r.code).length > 0 ? (
             <div className="flex flex-wrap gap-1">
               {clientRegulations
-                .filter((r) => r.regulations?.code)
+                .filter((r) => r.code)
                 .map((r) => (
-                  <Badge key={r.regulations!.id} variant="secondary">
-                    {r.regulations!.code}
+                  <Badge key={r.id} variant="secondary">
+                    {r.code}
                   </Badge>
                 ))}
             </div>
@@ -223,15 +229,13 @@ export default function ClientDetailPage() {
           <h2 className="text-sm font-medium text-muted-foreground mb-2">
             Monitoring Frequency
           </h2>
-          {clientMonitoringFrequencies.filter(
-            (r) => r.monitoring_frequencies?.code
-          ).length > 0 ? (
+          {clientMonitoringFrequencies.filter((r) => r.code).length > 0 ? (
             <div className="flex flex-wrap gap-1">
               {clientMonitoringFrequencies
-                .filter((r) => r.monitoring_frequencies?.code)
+                .filter((r) => r.code)
                 .map((r) => (
-                  <Badge key={r.monitoring_frequencies!.id} variant="secondary">
-                    {r.monitoring_frequencies!.code}
+                  <Badge key={r.id} variant="secondary">
+                    {r.code}
                   </Badge>
                 ))}
             </div>
@@ -295,11 +299,9 @@ export default function ClientDetailPage() {
                 foreignTable: "monitoring_frequencies",
                 ascending: true,
               });
-            setClientMonitoringFrequencies(
-              (mfData ?? []) as {
-                monitoring_frequencies: { id: string; code: string } | null;
-              }[]
-            );
+            const monitoringFrequencies: MonitoringFrequency[] =
+              (mfData ?? []).flatMap((row: any) => row.monitoring_frequencies ?? []);
+            setClientMonitoringFrequencies(monitoringFrequencies);
             const { data: regData } = await supabase
               .from("client_regulations")
               .select("regulations ( id, code )")
@@ -308,11 +310,9 @@ export default function ClientDetailPage() {
                 foreignTable: "regulations",
                 ascending: true,
               });
-            setClientRegulations(
-              (regData ?? []) as {
-                regulations: { id: string; code: string } | null;
-              }[]
-            );
+            const regulations: Regulation[] =
+              (regData ?? []).flatMap((row: any) => row.regulations ?? []);
+            setClientRegulations(regulations);
           }}
         />
       )}
