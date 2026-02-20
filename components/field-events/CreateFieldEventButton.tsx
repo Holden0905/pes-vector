@@ -146,18 +146,36 @@ export function CreateFieldEventButton({ onSuccess }: Props) {
     payload.program_id = programId || null;
     payload.lead_id = leadId === LEAD_NONE ? null : leadId || null;
 
-    const { error: err } = await supabase
+    const { data: inserted, error: err } = await supabase
       .from("field_events")
       .insert(payload)
       .select("id")
       .single();
 
-    setSubmitting(false);
     if (err) {
+      setSubmitting(false);
       setError(err.message);
       return;
     }
 
+    const { data: templates } = await supabase
+      .from("field_event_checklist_templates")
+      .select("section, label, sort_order")
+      .eq("program_type", "all")
+      .order("sort_order");
+    if (templates?.length) {
+      await supabase.from("field_event_checklist_items").insert(
+        templates.map((t) => ({
+          field_event_id: inserted.id,
+          section: t.section,
+          label: t.label,
+          is_complete: false,
+          sort_order: t.sort_order,
+        }))
+      );
+    }
+
+    setSubmitting(false);
     setOpen(false);
     setClientId("");
     setProgramId("");

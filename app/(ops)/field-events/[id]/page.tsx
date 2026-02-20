@@ -193,6 +193,14 @@ type ValveFollowup = {
   assigned_to: { full_name: string | null } | null;
 };
 
+type ChecklistItem = {
+  id: string;
+  section: string;
+  label: string;
+  is_complete: boolean;
+  sort_order: number;
+};
+
 type TvaUnit = { id: string; name: string };
 type Shift = {
   id: string;
@@ -917,6 +925,7 @@ export default function FieldEventDetailPage() {
   const [editShift, setEditShift] = useState<Shift | null>(null);
   const [shiftDateRange, setShiftDateRange] = useState<"7" | "14" | "all">("7");
   const [shiftOnlyMine, setShiftOnlyMine] = useState(false);
+  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -1037,6 +1046,35 @@ export default function FieldEventDetailPage() {
     loadShifts();
   }, [event?.client_id, isTechOrManager, shiftDateRange, shiftOnlyMine, session?.user?.id]);
 
+  useEffect(() => {
+    if (!event?.id) {
+      setChecklistItems([]);
+      return;
+    }
+    async function loadChecklist() {
+      const { data } = await supabase
+        .from("field_event_checklist_items")
+        .select("id, section, label, is_complete, sort_order")
+        .eq("field_event_id", event!.id)
+        .order("sort_order");
+      setChecklistItems((data ?? []) as ChecklistItem[]);
+    }
+    loadChecklist();
+  }, [event?.id]);
+
+  async function toggleChecklistItem(itemId: string) {
+    const item = checklistItems.find((c) => c.id === itemId);
+    if (!item) return;
+    const next = !item.is_complete;
+    setChecklistItems((prev) =>
+      prev.map((c) => (c.id === itemId ? { ...c, is_complete: next } : c))
+    );
+    await supabase
+      .from("field_event_checklist_items")
+      .update({ is_complete: next })
+      .eq("id", itemId);
+  }
+
   const BackButton = () => (
     <Button variant="outline" size="sm" asChild>
       <Link href="/field-events">
@@ -1097,32 +1135,74 @@ export default function FieldEventDetailPage() {
         )}
       </div>
 
-      <div className="space-y-2">
-        <div>
-          <span className="text-sm text-muted-foreground">Client: </span>
-          <span>{event.clients?.name ?? "—"}</span>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="space-y-2">
+          <div>
+            <span className="text-sm text-muted-foreground">Client: </span>
+            <span>{event.clients?.name ?? "—"}</span>
+          </div>
+          <div>
+            <span className="text-sm text-muted-foreground">Program: </span>
+            <span>{event.programs?.name ?? "—"}</span>
+          </div>
+          <div>
+            <span className="text-sm text-muted-foreground">Event name: </span>
+            <span>{event.name}</span>
+          </div>
+          <div>
+            <span className="text-sm text-muted-foreground">Status: </span>
+            <span>{event.status}</span>
+          </div>
+          <div>
+            <span className="text-sm text-muted-foreground">Lead: </span>
+            <span>{event.lead?.full_name ?? "Unassigned"}</span>
+          </div>
+          <div>
+            <span className="text-sm text-muted-foreground">Dates: </span>
+            <span>
+              {formatDate(event.start_date)} – {formatDate(event.end_date)}
+            </span>
+          </div>
         </div>
-        <div>
-          <span className="text-sm text-muted-foreground">Program: </span>
-          <span>{event.programs?.name ?? "—"}</span>
-        </div>
-        <div>
-          <span className="text-sm text-muted-foreground">Event name: </span>
-          <span>{event.name}</span>
-        </div>
-        <div>
-          <span className="text-sm text-muted-foreground">Status: </span>
-          <span>{event.status}</span>
-        </div>
-        <div>
-          <span className="text-sm text-muted-foreground">Lead: </span>
-          <span>{event.lead?.full_name ?? "Unassigned"}</span>
-        </div>
-        <div>
-          <span className="text-sm text-muted-foreground">Dates: </span>
-          <span>
-            {formatDate(event.start_date)} – {formatDate(event.end_date)}
-          </span>
+
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Checklist</h2>
+          {["Pre-Monitoring", "Post-Monitoring"].map((section) => {
+            const items = checklistItems.filter((c) => c.section === section);
+            if (items.length === 0) return null;
+            return (
+              <div key={section} className="space-y-2">
+                <div className="text-sm font-medium text-muted-foreground">
+                  {section}
+                </div>
+                <div className="space-y-2">
+                  {items.map((item) => (
+                    <label
+                      key={item.id}
+                      className="flex items-center gap-2 cursor-pointer text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={item.is_complete}
+                        onChange={() => toggleChecklistItem(item.id)}
+                        className="rounded border-input"
+                      />
+                      <span
+                        className={
+                          item.is_complete ? "line-through text-muted-foreground" : ""
+                        }
+                      >
+                        {item.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+          {checklistItems.length === 0 && (
+            <p className="text-sm text-muted-foreground">No checklist items.</p>
+          )}
         </div>
       </div>
 
