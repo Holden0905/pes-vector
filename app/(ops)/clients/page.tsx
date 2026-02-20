@@ -67,8 +67,9 @@ export default function ClientsPage() {
 
       const regMap: Record<string, string[]> = {};
       for (const r of regsRes.data ?? []) {
-        const row = r as { client_id: string; regulations: { code: any }[] | null };
-        const codes = (row.regulations ?? []).map((x) => x.code);
+        const row = r as { client_id: string; regulations?: { code: any } | { code: any }[] | null };
+        const regs = Array.isArray(row.regulations) ? row.regulations : row.regulations ? [row.regulations] : [];
+        const codes = regs.map((x) => x?.code).filter((c): c is string => c != null && c !== "");
         if (row.client_id && codes.length > 0) {
           if (!regMap[row.client_id]) regMap[row.client_id] = [];
           regMap[row.client_id].push(...codes);
@@ -80,9 +81,10 @@ export default function ClientsPage() {
       for (const f of freqsRes.data ?? []) {
         const row = f as {
           client_id: string;
-          monitoring_frequencies: { code: any }[] | null;
+          monitoring_frequencies?: { code: any } | { code: any }[] | null;
         };
-        const codes = (row.monitoring_frequencies ?? []).map((x) => x.code);
+        const freqs = Array.isArray(row.monitoring_frequencies) ? row.monitoring_frequencies : row.monitoring_frequencies ? [row.monitoring_frequencies] : [];
+        const codes = freqs.map((x) => x?.code).filter((c): c is string => c != null && c !== "");
         if (row.client_id && codes.length > 0) {
           if (!freqMap[row.client_id]) freqMap[row.client_id] = [];
           freqMap[row.client_id].push(...codes);

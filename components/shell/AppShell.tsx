@@ -1,7 +1,8 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import { Menu } from "lucide-react";
+import { Calendar, ClipboardList, Menu, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -24,35 +25,44 @@ const NavLinks = ({
   collapsed?: boolean;
   onNavigate?: () => void;
 }) => (
-  <nav className="p-2 space-y-1 text-sm">
+  <nav className={`p-2 space-y-1 text-sm ${collapsed ? "flex flex-col items-center" : ""}`}>
     <a
       href="/dashboard"
-      className="block rounded-md px-3 py-2 hover:bg-accent hover:text-accent-foreground"
+      className={`block rounded-md hover:bg-accent hover:text-accent-foreground ${collapsed ? "flex size-9 items-center justify-center" : "px-3 py-2"}`}
       title="Field Events"
       onClick={onNavigate}
     >
-      {collapsed ? "F" : "Field Events"}
+      {collapsed ? <Calendar className="size-5" /> : "Field Events"}
     </a>
     <a
       href="/work-requests"
-      className="block rounded-md px-3 py-2 hover:bg-accent hover:text-accent-foreground"
+      className={`block rounded-md hover:bg-accent hover:text-accent-foreground ${collapsed ? "flex size-9 items-center justify-center" : "px-3 py-2"}`}
       title="Work Requests"
       onClick={onNavigate}
     >
-      {collapsed ? "WR" : "Work Requests"}
+      {collapsed ? <ClipboardList className="size-5" /> : "Work Requests"}
     </a>
     <a
       href="/clients"
-      className="block rounded-md px-3 py-2 hover:bg-accent hover:text-accent-foreground"
+      className={`block rounded-md hover:bg-accent hover:text-accent-foreground ${collapsed ? "flex size-9 items-center justify-center" : "px-3 py-2"}`}
       title="Clients"
       onClick={onNavigate}
     >
-      {collapsed ? "C" : "Clients"}
+      {collapsed ? <Users className="size-5" /> : "Clients"}
     </a>
   </nav>
 );
 
+function getSectionTitle(pathname: string): string {
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/field-events")) return "Field Events";
+  if (pathname.startsWith("/work-requests")) return "Work Requests";
+  if (pathname.startsWith("/clients")) return "Clients";
+  return "Ops Dashboard";
+}
+
 export function AppShell({ children }: Props) {
+  const pathname = usePathname();
+  const sectionTitle = getSectionTitle(pathname ?? "");
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { signOut } = useAuth();
@@ -76,14 +86,14 @@ export function AppShell({ children }: Props) {
         {/* Desktop sidebar - hidden on mobile */}
         <aside
           className={[
-            "hidden md:block",
+            "hidden md:block shrink-0 overflow-hidden",
             "border-r border-border/60 bg-background/50 backdrop-blur",
-            collapsed ? "w-16" : "w-56",
+            collapsed ? "w-14" : "w-56",
             "transition-[width] duration-200",
             "h-screen sticky top-0",
           ].join(" ")}
         >
-          <div className="h-14 flex items-center justify-between px-3 border-b border-border/60">
+          <div className={`h-14 flex items-center border-b border-border/60 ${collapsed ? "justify-center px-0" : "justify-between px-3"}`}>
             <div className="font-semibold tracking-tight">
               {collapsed ? "PV" : "PES Vector"}
             </div>
@@ -107,7 +117,7 @@ export function AppShell({ children }: Props) {
                 <Menu className="size-5" />
               </Button>
               <div className="text-sm text-muted-foreground">
-                Ops Dashboard
+                {sectionTitle}
               </div>
             </div>
             <div className="flex items-center gap-2">
