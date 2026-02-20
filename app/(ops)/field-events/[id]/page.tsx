@@ -90,6 +90,77 @@ const PRIORITIES = [
   { value: "high", label: "High" },
 ] as const;
 
+function UpdateStatusModal({
+  eventId,
+  currentStatus,
+  onClose,
+  onSuccess,
+}: {
+  eventId: string;
+  currentStatus: string;
+  onClose: () => void;
+  onSuccess: () => Promise<void>;
+}) {
+  const [status, setStatus] = useState(currentStatus);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Update Status</DialogTitle>
+        </DialogHeader>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setError(null);
+            setSaving(true);
+            const { error: updErr } = await supabase
+              .from("field_events")
+              .update({ status })
+              .eq("id", eventId);
+            setSaving(false);
+            if (updErr) {
+              setError(updErr.message);
+              return;
+            }
+            await onSuccess();
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <label className="text-sm font-medium">Status</label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="mt-1 w-full">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {error && (
+            <p className="text-sm text-destructive">{error}</p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving…" : "Save"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 type FieldEventDetail = {
   id: string;
   client_id: string | null;
@@ -832,8 +903,10 @@ export default function FieldEventDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isManager, setIsManager] = useState(false);
+  const [isTech, setIsTech] = useState(false);
   const [isTechOrManager, setIsTechOrManager] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [updateStatusOpen, setUpdateStatusOpen] = useState(false);
   const [followups, setFollowups] = useState<ValveFollowup[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [addFollowUpOpen, setAddFollowUpOpen] = useState(false);
@@ -878,6 +951,7 @@ export default function FieldEventDetailPage() {
           .single();
         const role = (profile as { role?: string } | null)?.role;
         setIsManager(role === "manager");
+        setIsTech(role === "tech");
         setIsTechOrManager(role === "manager" || role === "tech");
       }
     }
@@ -1010,6 +1084,15 @@ export default function FieldEventDetailPage() {
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
             <Pencil className="size-4" />
             Edit
+          </Button>
+        )}
+        {isTech && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setUpdateStatusOpen(true)}
+          >
+            Update Status
           </Button>
         )}
       </div>
@@ -1336,6 +1419,26 @@ export default function FieldEventDetailPage() {
             )}
           </div>
         </div>
+      )}
+
+      {updateStatusOpen && (
+        <UpdateStatusModal
+          eventId={event.id}
+          currentStatus={event.status}
+          onClose={() => setUpdateStatusOpen(false)}
+          onSuccess={async () => {
+            setUpdateStatusOpen(false);
+            const { data } = await supabase
+              .from("field_events")
+              .select(
+                "id, client_id, program_id, lead_id, name, status, event_type, priority, start_date, end_date, clients(name), programs(name), lead:profiles!field_events_lead_id_fkey(full_name)"
+              )
+              .eq("id", id)
+              .single();
+            if (data) setEvent(data as unknown as FieldEventDetail);
+            router.refresh();
+          }}
+        />
       )}
 
       {editOpen && (

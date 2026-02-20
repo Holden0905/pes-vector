@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, notFound } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { useParams, notFound, useRouter } from "next/navigation";
+import { ChevronLeft, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabaseClient";
@@ -139,6 +139,248 @@ function EditTimeEntryModal({
               Cancel
             </Button>
             <Button type="submit">Save</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const STATUSES = [
+  { value: "not_started", label: "Not started" },
+  { value: "drafting", label: "Drafting" },
+  { value: "checking", label: "Checking" },
+  { value: "database", label: "Database" },
+  { value: "ready_to_close", label: "Ready to close" },
+  { value: "complete", label: "Complete" },
+] as const;
+
+const PRIORITY_NONE = "__none__";
+const PRIORITIES = [
+  { value: PRIORITY_NONE, label: "—" },
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+] as const;
+
+const OWNER_NONE = "__none__";
+const ASSIGNED_NONE = "__none__";
+
+function UpdateStatusModal({
+  workRequestId,
+  currentStatus,
+  onClose,
+  onSuccess,
+}: {
+  workRequestId: string;
+  currentStatus: string;
+  onClose: () => void;
+  onSuccess: () => Promise<void>;
+}) {
+  const [status, setStatus] = useState(currentStatus);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Update Status</DialogTitle>
+        </DialogHeader>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setError(null);
+            setSaving(true);
+            const { error: updErr } = await supabase
+              .from("work_requests")
+              .update({ status })
+              .eq("id", workRequestId);
+            setSaving(false);
+            if (updErr) {
+              setError(updErr.message);
+              return;
+            }
+            await onSuccess();
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <label className="text-sm font-medium">Status</label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="mt-1 w-full">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {error && (
+            <p className="text-sm text-destructive">{error}</p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving…" : "Save"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditWorkRequestModal({
+  item,
+  profiles,
+  onClose,
+  onSuccess,
+}: {
+  item: WorkRequestDetail;
+  profiles: { id: string; full_name: string | null }[];
+  onClose: () => void;
+  onSuccess: () => Promise<void>;
+}) {
+  const [status, setStatus] = useState(item.status);
+  const [priority, setPriority] = useState(item.priority ?? PRIORITY_NONE);
+  const [dueDate, setDueDate] = useState(item.due_date?.slice(0, 10) ?? "");
+  const [primaryOwnerId, setPrimaryOwnerId] = useState(
+    item.primary_owner_id ?? OWNER_NONE
+  );
+  const [assignedToId, setAssignedToId] = useState(
+    item.assigned_to_id ?? ASSIGNED_NONE
+  );
+  const [notes, setNotes] = useState(item.notes ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Work Request</DialogTitle>
+        </DialogHeader>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setError(null);
+            setSaving(true);
+            const { error: updErr } = await supabase
+              .from("work_requests")
+              .update({
+                status,
+                priority: priority === PRIORITY_NONE ? null : priority,
+                due_date: dueDate || null,
+                primary_owner_id: primaryOwnerId === OWNER_NONE ? null : primaryOwnerId,
+                assigned_to_id: assignedToId === ASSIGNED_NONE ? null : assignedToId,
+                notes: notes.trim() || null,
+              })
+              .eq("id", item.id);
+            setSaving(false);
+            if (updErr) {
+              setError(updErr.message);
+              return;
+            }
+            await onSuccess();
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <label className="text-sm font-medium">Status</label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="mt-1 w-full">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-sm font-medium">Priority</label>
+            <Select value={priority} onValueChange={setPriority}>
+              <SelectTrigger className="mt-1 w-full">
+                <SelectValue placeholder="Select priority" />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITIES.map((p) => (
+                  <SelectItem key={p.value} value={p.value}>
+                    {p.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-sm font-medium">Due date</label>
+            <Input
+              type="date"
+              className="mt-1"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Primary owner</label>
+            <Select value={primaryOwnerId} onValueChange={setPrimaryOwnerId}>
+              <SelectTrigger className="mt-1 w-full">
+                <SelectValue placeholder="Select owner" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={OWNER_NONE}>—</SelectItem>
+                {profiles.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.full_name ?? p.id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-sm font-medium">Assigned to</label>
+            <Select value={assignedToId} onValueChange={setAssignedToId}>
+              <SelectTrigger className="mt-1 w-full">
+                <SelectValue placeholder="Select assignee" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ASSIGNED_NONE}>Unassigned</SelectItem>
+                {profiles.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.full_name ?? p.id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-sm font-medium">Notes</label>
+            <textarea
+              className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+          </div>
+          {error && (
+            <p className="text-sm text-destructive">{error}</p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving…" : "Save"}
+            </Button>
           </div>
         </form>
       </DialogContent>
@@ -424,7 +666,10 @@ type WorkRequestDetail = {
   priority: string | null;
   due_date: string | null;
   notes: string | null;
+  primary_owner_id: string | null;
   primary_owner: { full_name: string } | null;
+  assigned_to_id: string | null;
+  assigned_to: { full_name: string } | null;
   field_events: {
     id: string;
     name: string | null;
@@ -459,6 +704,7 @@ export default function WorkRequestDetailPage() {
     }[];
   } | null>(null);
   const [isManager, setIsManager] = useState(false);
+  const [isTech, setIsTech] = useState(false);
   const [editingEntry, setEditingEntry] = useState<{
     id: string;
     work_type_id: string;
@@ -470,6 +716,9 @@ export default function WorkRequestDetailPage() {
   const [teError, setTeError] = useState<string | null>(null);
   const [addTimeOpen, setAddTimeOpen] = useState(false);
   const [budgetModalOpen, setBudgetModalOpen] = useState(false);
+  const [editWorkRequestOpen, setEditWorkRequestOpen] = useState(false);
+  const [updateStatusOpen, setUpdateStatusOpen] = useState(false);
+  const router = useRouter();
 
   async function loadHoursData() {
     const [wtRes, profRes, budRes, teRes] = await Promise.all([
@@ -534,7 +783,7 @@ export default function WorkRequestDetailPage() {
       const { data, error: err } = await supabase
         .from("work_requests")
         .select(
-          "id, field_event_id, wr_number, status, priority, due_date, notes, primary_owner:profiles!work_requests_primary_owner_id_fkey(full_name), field_events(id, name, clients(name), programs(name)), wr_assignees(user_id)"
+          "id, field_event_id, wr_number, status, priority, due_date, notes, primary_owner_id, primary_owner:profiles!work_requests_primary_owner_id_fkey(id, full_name), assigned_to_id, assigned_to:profiles!work_requests_assigned_to_fk(id, full_name), field_events(id, name, clients(name), programs(name)), wr_assignees(user_id)"
         )
         .eq("id", id)
         .single();
@@ -557,14 +806,18 @@ export default function WorkRequestDetailPage() {
 
       setItem(data as unknown as WorkRequestDetail);
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
           .from("profiles")
           .select("id, full_name, role")
           .eq("id", user.id)
           .single();
-        setIsManager((profile as { role?: string } | null)?.role === "manager");
+        const role = (profile as { role?: string } | null)?.role;
+        setIsManager(role === "manager");
+        setIsTech(role === "tech");
       }
 
       await loadHoursData();
@@ -573,6 +826,21 @@ export default function WorkRequestDetailPage() {
 
     load();
   }, [id, session?.user?.id]);
+
+  async function loadItem() {
+    if (!id) return;
+    const { data, error: err } = await supabase
+      .from("work_requests")
+      .select(
+        "id, field_event_id, wr_number, status, priority, due_date, notes, primary_owner_id, primary_owner:profiles!work_requests_primary_owner_id_fkey(id, full_name), assigned_to_id, assigned_to:profiles!work_requests_assigned_to_fk(id, full_name), field_events(id, name, clients(name), programs(name)), wr_assignees(user_id)"
+      )
+      .eq("id", id)
+      .single();
+    if (!err && data) {
+      setItem(data as unknown as WorkRequestDetail);
+    }
+    router.refresh();
+  }
 
   const BackButton = () => (
     <Button variant="outline" size="sm" asChild>
@@ -615,9 +883,6 @@ export default function WorkRequestDetailPage() {
   const clientName = item.field_events?.clients?.name ?? "—";
   const programName = item.field_events?.programs?.name ?? "—";
   const fieldEventName = item.field_events?.name ?? "—";
-  const hasAssignees =
-    item.wr_assignees != null && item.wr_assignees.length > 0;
-
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
@@ -627,6 +892,26 @@ export default function WorkRequestDetailPage() {
             <Link href={`/field-events/${item.field_event_id}`}>
               View Field Event
             </Link>
+          </Button>
+        )}
+        {isManager && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setEditWorkRequestOpen(true)}
+            className="gap-2"
+          >
+            <Pencil className="size-4" />
+            Edit
+          </Button>
+        )}
+        {isTech && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setUpdateStatusOpen(true)}
+          >
+            Update Status
           </Button>
         )}
       </div>
@@ -661,12 +946,48 @@ export default function WorkRequestDetailPage() {
           <span>{formatDate(item.due_date)}</span>
         </div>
         <div>
-          <span className="text-sm text-muted-foreground">Primary owner: </span>
-          <span>{item.primary_owner?.full_name ?? "Unassigned"}</span>
+          <span className="text-sm text-muted-foreground">Owner: </span>
+          <span>{item.primary_owner?.full_name ?? "—"}</span>
         </div>
-        <div>
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm text-muted-foreground">Assigned: </span>
-          <span>{hasAssignees ? "✅" : "—"}</span>
+          <span>{item.assigned_to?.full_name ?? "—"}</span>
+          {isTech && session?.user?.id && (
+            <>
+              {(item.assigned_to_id === null || item.assigned_to_id !== session.user.id) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={async () => {
+                    const { error: updErr } = await supabase
+                      .from("work_requests")
+                      .update({ assigned_to_id: session.user!.id })
+                      .eq("id", item.id);
+                    if (!updErr) await loadItem();
+                  }}
+                >
+                  Assign to me
+                </Button>
+              )}
+              {item.assigned_to_id === session.user.id && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={async () => {
+                    const { error: updErr } = await supabase
+                      .from("work_requests")
+                      .update({ assigned_to_id: null })
+                      .eq("id", item.id);
+                    if (!updErr) await loadItem();
+                  }}
+                >
+                  Mark unassigned
+                </Button>
+              )}
+            </>
+          )}
         </div>
         <div>
           <span className="text-sm text-muted-foreground">Notes: </span>
@@ -894,6 +1215,30 @@ export default function WorkRequestDetailPage() {
           onSuccess={async () => {
             setAddTimeOpen(false);
             await loadHoursData();
+          }}
+        />
+      )}
+
+      {updateStatusOpen && item && (
+        <UpdateStatusModal
+          workRequestId={item.id}
+          currentStatus={item.status}
+          onClose={() => setUpdateStatusOpen(false)}
+          onSuccess={async () => {
+            setUpdateStatusOpen(false);
+            await loadItem();
+          }}
+        />
+      )}
+
+      {editWorkRequestOpen && item && hoursData && (
+        <EditWorkRequestModal
+          item={item}
+          profiles={hoursData.profiles}
+          onClose={() => setEditWorkRequestOpen(false)}
+          onSuccess={async () => {
+            setEditWorkRequestOpen(false);
+            await loadItem();
           }}
         />
       )}
