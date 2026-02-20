@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import { Calendar, ClipboardList, Menu, Users } from "lucide-react";
+import { Calendar, CalendarDays, ClipboardList, LayoutDashboard, Menu, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -29,6 +30,14 @@ const NavLinks = ({
     <a
       href="/dashboard"
       className={`block rounded-md hover:bg-accent hover:text-accent-foreground ${collapsed ? "flex size-9 items-center justify-center" : "px-3 py-2"}`}
+      title="Dashboard"
+      onClick={onNavigate}
+    >
+      {collapsed ? <LayoutDashboard className="size-5" /> : "Dashboard"}
+    </a>
+    <a
+      href="/field-events"
+      className={`block rounded-md hover:bg-accent hover:text-accent-foreground ${collapsed ? "flex size-9 items-center justify-center" : "px-3 py-2"}`}
       title="Field Events"
       onClick={onNavigate}
     >
@@ -43,6 +52,14 @@ const NavLinks = ({
       {collapsed ? <ClipboardList className="size-5" /> : "Work Requests"}
     </a>
     <a
+      href="/weekly-work-schedule"
+      className={`block rounded-md hover:bg-accent hover:text-accent-foreground ${collapsed ? "flex size-9 items-center justify-center" : "px-3 py-2"}`}
+      title="Weekly Work Schedule"
+      onClick={onNavigate}
+    >
+      {collapsed ? <CalendarDays className="size-5" /> : "Weekly Work Schedule"}
+    </a>
+    <a
       href="/clients"
       className={`block rounded-md hover:bg-accent hover:text-accent-foreground ${collapsed ? "flex size-9 items-center justify-center" : "px-3 py-2"}`}
       title="Clients"
@@ -53,16 +70,7 @@ const NavLinks = ({
   </nav>
 );
 
-function getSectionTitle(pathname: string): string {
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/field-events")) return "Field Events";
-  if (pathname.startsWith("/work-requests")) return "Work Requests";
-  if (pathname.startsWith("/clients")) return "Clients";
-  return "Ops Dashboard";
-}
-
 export function AppShell({ children }: Props) {
-  const pathname = usePathname();
-  const sectionTitle = getSectionTitle(pathname ?? "");
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { signOut } = useAuth();
@@ -93,9 +101,18 @@ export function AppShell({ children }: Props) {
             "h-screen sticky top-0",
           ].join(" ")}
         >
-          <div className={`h-14 flex items-center border-b border-border/60 ${collapsed ? "justify-center px-0" : "justify-between px-3"}`}>
-            <div className="font-semibold tracking-tight">
-              {collapsed ? "PV" : "PES Vector"}
+          <div className={`h-14 flex items-center border-b border-border/60 ${collapsed ? "justify-center px-0" : "px-3"}`}>
+            <div className={`flex items-center gap-3 px-4 py-4 ${collapsed ? "justify-center px-0" : ""}`}>
+              <Image
+                src="/brand/pes-mark-black.jpg"
+                alt="PES"
+                width={34}
+                height={34}
+                className="object-contain opacity-95"
+              />
+              {!collapsed && (
+                <span className="text-2xl font-bold tracking-wider text-primary leading-none">Vector</span>
+              )}
             </div>
           </div>
           <NavLinks collapsed={collapsed} />
@@ -116,8 +133,8 @@ export function AppShell({ children }: Props) {
               >
                 <Menu className="size-5" />
               </Button>
-              <div className="text-sm text-muted-foreground">
-                {sectionTitle}
+              <div className="text-xl text-muted-foreground font-medium">
+                Proactive Environmental Services
               </div>
             </div>
             <div className="flex items-center gap-2">

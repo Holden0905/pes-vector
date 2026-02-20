@@ -132,7 +132,7 @@ export default function ClientsPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((client) => (
           <Link key={client.id} href={`/clients/${client.id}`} className="block">
-            <Card className="h-full transition-colors hover:bg-accent/50 py-4">
+            <Card className="h-full transition-colors hover:bg-accent/50 py-4 border-l-2 border-l-primary">
               <CardContent className="p-4 pt-4">
                 <div className="flex items-start justify-between gap-2">
                   <h2 className="text-lg font-semibold">{client.name ?? "—"}</h2>

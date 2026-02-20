@@ -91,7 +91,7 @@ export function WorkRequestBoard() {
             <div className="space-y-2">
               {filtered.map((item) => (
                 <Link key={item.id} href={`/work-requests/${item.id}`} className="block">
-                  <Card className="p-3">
+                  <Card className="p-3 border-l-2 border-l-primary">
                     <div className="text-xs text-muted-foreground">
                       {getClientName(item)}
                     </div>
