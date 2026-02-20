@@ -1087,10 +1087,10 @@ export default function FieldEventDetailPage() {
               </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[720px] text-sm">
                   <thead>
                     <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-2 text-left font-medium">Date</th>
+                      <th className="sticky left-0 z-10 bg-muted/50 px-4 py-2 text-left font-medium">Date</th>
                       <th className="px-4 py-2 text-left font-medium">Tech</th>
                       <th className="px-4 py-2 text-left font-medium">TVA Unit</th>
                       <th className="px-4 py-2 text-left font-medium">Calibration</th>
@@ -1104,7 +1104,7 @@ export default function FieldEventDetailPage() {
                       const canEdit = isManager || s.user_id === session?.user?.id;
                       return (
                         <tr key={s.id} className="px-4 py-3">
-                          <td className="px-4 py-3">
+                          <td className="sticky left-0 z-10 bg-background px-4 py-3">
                             {s.work_date ? formatMDY(s.work_date) : "—"}
                           </td>
                           <td className="px-4 py-3">{s.user?.full_name ?? "—"}</td>
