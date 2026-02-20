@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useParams, notFound } from "next/navigation";
+import { ChevronLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabaseClient";
@@ -573,15 +574,19 @@ export default function WorkRequestDetailPage() {
     load();
   }, [id, session?.user?.id]);
 
+  const BackButton = () => (
+    <Button variant="outline" size="sm" asChild>
+      <Link href="/work-requests">
+        <ChevronLeft className="size-4" />
+        Back to Work Requests
+      </Link>
+    </Button>
+  );
+
   if (loading) {
     return (
       <div className="space-y-4">
-        <Link
-          href="/work-requests"
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          Back to work requests
-        </Link>
+        <BackButton />
         <p>Loading...</p>
       </div>
     );
@@ -590,12 +595,7 @@ export default function WorkRequestDetailPage() {
   if (error) {
     return (
       <div className="space-y-4">
-        <Link
-          href="/work-requests"
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          Back to work requests
-        </Link>
+        <BackButton />
         <p>Error: {error}</p>
       </div>
     );
@@ -604,12 +604,7 @@ export default function WorkRequestDetailPage() {
   if (!item) {
     return (
       <div className="space-y-4">
-        <Link
-          href="/work-requests"
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          Back to work requests
-        </Link>
+        <BackButton />
         <p>Loading...</p>
       </div>
     );
@@ -626,19 +621,13 @@ export default function WorkRequestDetailPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        <Link
-          href="/work-requests"
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          Back to work requests
-        </Link>
+        <BackButton />
         {item.field_event_id && (
-          <Link
-            href={`/field-events/${item.field_event_id}`}
-            className="text-sm text-muted-foreground hover:underline"
-          >
-            View field event
-          </Link>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/field-events/${item.field_event_id}`}>
+              View Field Event
+            </Link>
+          </Button>
         )}
       </div>
 

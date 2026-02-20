@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import { Menu } from "lucide-react";
+import { Calendar, CalendarDays, ClipboardList, LayoutDashboard, Menu, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -24,30 +26,46 @@ const NavLinks = ({
   collapsed?: boolean;
   onNavigate?: () => void;
 }) => (
-  <nav className="p-2 space-y-1 text-sm">
+  <nav className={`p-2 space-y-1 text-sm ${collapsed ? "flex flex-col items-center" : ""}`}>
     <a
       href="/dashboard"
-      className="block rounded-md px-3 py-2 hover:bg-accent hover:text-accent-foreground"
+      className={`block rounded-md hover:bg-accent hover:text-accent-foreground ${collapsed ? "flex size-9 items-center justify-center" : "px-3 py-2"}`}
+      title="Dashboard"
+      onClick={onNavigate}
+    >
+      {collapsed ? <LayoutDashboard className="size-5" /> : "Dashboard"}
+    </a>
+    <a
+      href="/field-events"
+      className={`block rounded-md hover:bg-accent hover:text-accent-foreground ${collapsed ? "flex size-9 items-center justify-center" : "px-3 py-2"}`}
       title="Field Events"
       onClick={onNavigate}
     >
-      {collapsed ? "F" : "Field Events"}
+      {collapsed ? <Calendar className="size-5" /> : "Field Events"}
     </a>
     <a
       href="/work-requests"
-      className="block rounded-md px-3 py-2 hover:bg-accent hover:text-accent-foreground"
+      className={`block rounded-md hover:bg-accent hover:text-accent-foreground ${collapsed ? "flex size-9 items-center justify-center" : "px-3 py-2"}`}
       title="Work Requests"
       onClick={onNavigate}
     >
-      {collapsed ? "WR" : "Work Requests"}
+      {collapsed ? <ClipboardList className="size-5" /> : "Work Requests"}
+    </a>
+    <a
+      href="/weekly-work-schedule"
+      className={`block rounded-md hover:bg-accent hover:text-accent-foreground ${collapsed ? "flex size-9 items-center justify-center" : "px-3 py-2"}`}
+      title="Weekly Work Schedule"
+      onClick={onNavigate}
+    >
+      {collapsed ? <CalendarDays className="size-5" /> : "Weekly Work Schedule"}
     </a>
     <a
       href="/clients"
-      className="block rounded-md px-3 py-2 hover:bg-accent hover:text-accent-foreground"
+      className={`block rounded-md hover:bg-accent hover:text-accent-foreground ${collapsed ? "flex size-9 items-center justify-center" : "px-3 py-2"}`}
       title="Clients"
       onClick={onNavigate}
     >
-      {collapsed ? "C" : "Clients"}
+      {collapsed ? <Users className="size-5" /> : "Clients"}
     </a>
   </nav>
 );
@@ -76,16 +94,25 @@ export function AppShell({ children }: Props) {
         {/* Desktop sidebar - hidden on mobile */}
         <aside
           className={[
-            "hidden md:block",
+            "hidden md:block shrink-0 overflow-hidden",
             "border-r border-border/60 bg-background/50 backdrop-blur",
-            collapsed ? "w-16" : "w-56",
+            collapsed ? "w-14" : "w-56",
             "transition-[width] duration-200",
             "h-screen sticky top-0",
           ].join(" ")}
         >
-          <div className="h-14 flex items-center justify-between px-3 border-b border-border/60">
-            <div className="font-semibold tracking-tight">
-              {collapsed ? "PV" : "PES Vector"}
+          <div className={`h-14 flex items-center border-b border-border/60 ${collapsed ? "justify-center px-0" : "px-3"}`}>
+            <div className={`flex items-center gap-3 px-4 py-4 ${collapsed ? "justify-center px-0" : ""}`}>
+              <Image
+                src="/brand/pes-mark-black.jpg"
+                alt="PES"
+                width={34}
+                height={34}
+                className="object-contain opacity-95"
+              />
+              {!collapsed && (
+                <span className="text-2xl font-bold tracking-wider text-primary leading-none">Vector</span>
+              )}
             </div>
           </div>
           <NavLinks collapsed={collapsed} />
@@ -106,8 +133,8 @@ export function AppShell({ children }: Props) {
               >
                 <Menu className="size-5" />
               </Button>
-              <div className="text-sm text-muted-foreground">
-                Ops Dashboard
+              <div className="text-xl text-muted-foreground font-medium">
+                Proactive Environmental Services
               </div>
             </div>
             <div className="flex items-center gap-2">

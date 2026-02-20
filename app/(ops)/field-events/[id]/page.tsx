@@ -965,9 +965,9 @@ export default function FieldEventDetailPage() {
 
   const BackButton = () => (
     <Button variant="outline" size="sm" asChild>
-      <Link href="/dashboard">
+      <Link href="/field-events">
         <ChevronLeft className="size-4" />
-        Back to dashboard
+        Back to Field Events
       </Link>
     </Button>
   );

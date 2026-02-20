@@ -67,8 +67,9 @@ export default function ClientsPage() {
 
       const regMap: Record<string, string[]> = {};
       for (const r of regsRes.data ?? []) {
-        const row = r as { client_id: string; regulations: { code: any }[] | null };
-        const codes = (row.regulations ?? []).map((x) => x.code);
+        const row = r as { client_id: string; regulations?: { code: any } | { code: any }[] | null };
+        const regs = Array.isArray(row.regulations) ? row.regulations : row.regulations ? [row.regulations] : [];
+        const codes = regs.map((x) => x?.code).filter((c): c is string => c != null && c !== "");
         if (row.client_id && codes.length > 0) {
           if (!regMap[row.client_id]) regMap[row.client_id] = [];
           regMap[row.client_id].push(...codes);
@@ -80,9 +81,10 @@ export default function ClientsPage() {
       for (const f of freqsRes.data ?? []) {
         const row = f as {
           client_id: string;
-          monitoring_frequencies: { code: any }[] | null;
+          monitoring_frequencies?: { code: any } | { code: any }[] | null;
         };
-        const codes = (row.monitoring_frequencies ?? []).map((x) => x.code);
+        const freqs = Array.isArray(row.monitoring_frequencies) ? row.monitoring_frequencies : row.monitoring_frequencies ? [row.monitoring_frequencies] : [];
+        const codes = freqs.map((x) => x?.code).filter((c): c is string => c != null && c !== "");
         if (row.client_id && codes.length > 0) {
           if (!freqMap[row.client_id]) freqMap[row.client_id] = [];
           freqMap[row.client_id].push(...codes);
@@ -130,7 +132,7 @@ export default function ClientsPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((client) => (
           <Link key={client.id} href={`/clients/${client.id}`} className="block">
-            <Card className="h-full transition-colors hover:bg-accent/50 py-4">
+            <Card className="h-full transition-colors hover:bg-accent/50 py-4 border-l-2 border-l-primary">
               <CardContent className="p-4 pt-4">
                 <div className="flex items-start justify-between gap-2">
                   <h2 className="text-lg font-semibold">{client.name ?? "—"}</h2>
