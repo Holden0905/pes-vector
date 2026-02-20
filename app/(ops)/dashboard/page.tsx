@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CreateFieldEventButton } from "@/components/field-events/CreateFieldEventButton";
 
 type FieldEvent = {
@@ -63,7 +64,63 @@ export default function DashboardPage() {
           Error loading field events: {fetchError}
         </p>
       )}
-      <div className="grid grid-cols-4 gap-4">
+
+      {/* Mobile: single-column list with status filter */}
+      <div className="md:hidden">
+        <Tabs defaultValue="not_started" className="w-full">
+          <TabsList className="w-full flex flex-wrap h-auto gap-1 p-1">
+            {STATUSES.map((status) => {
+              const count = events.filter((e) => e.status === status).length;
+              return (
+                <TabsTrigger
+                  key={status}
+                  value={status}
+                  className="flex-1 min-w-0 text-xs"
+                >
+                  {status.replace(/_/g, " ")} ({count})
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+          {STATUSES.map((status) => {
+            const filtered = events.filter((e) => e.status === status);
+            return (
+              <TabsContent key={status} value={status} className="mt-3">
+                <div className="space-y-2">
+                  {filtered.map((event) => (
+                    <Link
+                      key={event.id}
+                      href={`/field-events/${event.id}`}
+                      className="block"
+                    >
+                      <Card className="p-3">
+                        <div className="text-sm font-medium text-muted-foreground">
+                          {event.clients?.name ?? "No client"}
+                        </div>
+                        <div className="text-sm font-medium text-muted-foreground">
+                          {event.programs?.name ?? "—"}
+                        </div>
+                        <div className="text-sm font-medium">{event.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          Lead: {event.lead?.full_name ?? "Unassigned"}
+                        </div>
+                      </Card>
+                    </Link>
+                  ))}
+                  {filtered.length === 0 && (
+                    <div className="text-xs text-muted-foreground py-4">
+                      No events
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+            );
+          })}
+        </Tabs>
+      </div>
+
+      {/* Desktop: 4-column kanban grid */}
+      <div className="hidden md:grid grid-cols-4 gap-4">
         {STATUSES.map((status) => {
           const filtered = events.filter((e) => e.status === status);
 
